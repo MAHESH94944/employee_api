@@ -2,11 +2,21 @@ import Employee from "../models/Employee.js";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import multer from "multer";
-import { put } from "@vercel/blob";
+import path from "path";
 import Department from "../models/Department.js";
 
-// Configure multer to use memory storage (temporary storage for the file)
-const upload = multer({ storage: multer.memoryStorage() });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "public/uploads");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage: storage,
+});
 
 const addEmployee = async (req, res) => {
   try {
@@ -59,25 +69,13 @@ const addEmployee = async (req, res) => {
         .json({ success: false, error: "Employee ID already exists" });
     }
 
-    let profileImage = "";
-
-    // Handle file upload if exists
-    if (req.file) {
-      const blob = await put(
-        `employees/${Date.now()}-${req.file.originalname}`,
-        req.file.buffer,
-        { access: "public" }
-      );
-      profileImage = blob.url;
-    }
-
     const hashPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       name,
       email,
       password: hashPassword,
       role,
-      profileImage,
+      profileImage: req.file ? req.file.filename : "",
     });
     const saveUser = await newUser.save();
 
