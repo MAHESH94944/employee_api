@@ -13,10 +13,5 @@
         }
     ],
     "blob": true,
-    "rewrites": [
-        {
-            "source": "/(.*)",
-            "destination": "/"
-        }
-    ]
+    
 }
